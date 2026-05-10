@@ -1,27 +1,28 @@
 // src/protocol/parsers/PacketParser.ts
 
-import { ParsedSpecificPacket, TMHeader } from "../../types/index.js";
+import { IPacketParser, IParserRouter, ParsedSpecificPacket, TMHeader, ISpecificParser } from "../../types/index.js";
 import { TMParseError } from '../../errors/techman-errors.js';
 import { TMSCTParser } from "./TMSCTParser.js";
 import { TMSTAParser } from "./TMSTAParser.js";
 import { TMSVRParser } from "./TMSVRParser.js";
 import { CPERRParser } from "./CPERRParser.js";
 
-export abstract class PacketParser {
-  private static calculateChecksum(data: string): string {
-    const buffer = Buffer.from(data, 'utf8');
-    let checksum = 0;
-    for (let i = 0; i < buffer.length; i++) {
-      checksum ^= buffer[i];
-    }
-    return checksum.toString(16).toUpperCase().padStart(2, '0');
-  }
-
-  private static calculateByteLength(str: string): number {
-    return Buffer.byteLength(str, 'utf8');
-  }
-
-  protected static parseInitialParts(raw: string): { header: string; content: string; parts: string[] } {
+/**
+ * Базовый парсер пакетов протокола TM.
+ * Отвечает за проверку структуры, валидацию контрольной суммы и извлечение сырых данных.
+ */
+export class PacketParser implements IPacketParser {
+  /**
+   * Выполняет первичный разбор сырой строки пакета.
+   * 
+   * @param raw - Полная строка пакета (например, "$TMSCT,10,ID,data...*CC").
+   * @returns Объект с заголовком, полным содержимым и массивом частей.
+   * 
+   * @throws {TMParseError} Если отсутствуют разделители ($ или *).
+   * @throws {TMParseError} Если контрольная сумма (checksum) не совпадает.
+   * @throws {TMParseError} Если длина данных не соответствует заявленной в пакете.
+   */
+  parse(raw: string): { header: string; content: string; parts: string[] } {
     const trimmed = raw.trim();
     if (!trimmed.startsWith('$') || !trimmed.includes('*')) throw new TMParseError('Missing start ($) or end (*) delimiter');
 
@@ -45,25 +46,75 @@ export abstract class PacketParser {
     const header = parts[0];
     return { header, content, parts };
   }
-} // Good
 
-export class ParserRouter {
-  static routeAndParse(raw: string): ParsedSpecificPacket {
+  /**
+   * Вычисляет контрольную сумму путем XOR-суммирования байтов строки.
+   * @param data - Содержимое пакета между '$' и '*'.
+   * @internal
+   */
+  private calculateChecksum(data: string): string {
+    const buffer = Buffer.from(data, 'utf8');
+    let checksum = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      checksum ^= buffer[i];
+    }
+    return checksum.toString(16).toUpperCase().padStart(2, '0');
+  }
+
+  /**
+   * Вычисляет длину строки в байтах (UTF-8).
+   * @internal
+   */
+  private calculateByteLength(str: string): number {
+    return Buffer.byteLength(str, 'utf8');
+  }
+}
+
+/**
+ * Роутер парсеров. Определяет тип пакета по его заголовку 
+ * и делегирует разбор специализированному парсеру (TMSCT, TMSTA и т.д.).
+ */
+export class ParserRouter implements IParserRouter {
+  /** 
+   * Реестр доступных парсеров, сопоставленных с заголовками TMHeader.
+   */
+  private readonly parsers: Record<string, ISpecificParser>;
+
+  constructor() {
+    const base = new PacketParser();
+
+    this.parsers = {
+      [TMHeader.Script]: new TMSCTParser(base),
+      [TMHeader.Status]: new TMSTAParser(base),
+      [TMHeader.Value]:  new TMSVRParser(base),
+      [TMHeader.Error]:  new CPERRParser(base),
+    };
+  }
+
+  /**
+   * Определяет заголовок пакета и направляет его в соответствующий парсер.
+   * 
+   * @param raw - Сырая строка ответа от робота.
+   * @returns Результат парсинга, специфичный для данного типа заголовка.
+   * 
+   * @throws {TMParseError} Если заголовок не поддерживается или не найден.
+   * 
+   * @example
+   * ```ts
+   * const router = new ParserRouter();
+   * const result = router.routeAndParse("$TMSTA,2,00*3E");
+   * ```
+   */
+  routeAndParse(raw: string): ParsedSpecificPacket {
     const headerMatch = raw.match(/^\$(\w+),/);
     const header = headerMatch ? headerMatch[1] : '';
-    if (!header) throw new TMParseError(`Could not identify packet header: ${raw.substring(0, 20)}...`);
 
-    switch (header) {
-      case TMHeader.Script:
-        return TMSCTParser.parse(raw);
-      case TMHeader.Status:
-        return TMSTAParser.parse(raw);
-      case TMHeader.Value:
-        return TMSVRParser.parse(raw);
-      case TMHeader.Error:
-        return CPERRParser.parse(raw);
-      default:
-        throw new TMParseError(`Unsupported protocol header: ${header}`);
+    const parser = this.parsers[header];
+    
+    if (!parser) {
+      throw new TMParseError(`Unsupported protocol header: ${header || 'Unknown'}`);
     }
+
+    return parser.parse(raw);
   }
-} // Good
+}

@@ -21,7 +21,7 @@ describe('TMConnection (Простой тест)', () => {
   });
 
   it('должен подключиться к серверу и получить ответ', async () => {
-    const robot = new TMConnection(HOST, PORT, false);
+    const robot = new TMConnection(HOST, PORT);
     await robot.connect();
     const mockPacket = { id: '1', raw: '$TMSTA,2,00,*41\r\n' } as any;
     const result = await robot.execute(mockPacket);

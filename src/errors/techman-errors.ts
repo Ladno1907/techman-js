@@ -22,7 +22,7 @@ export class TMParseError extends TechmanError {
 
 export class TMProtocolError extends TechmanError {
   constructor(public header: string, message: string) {
-    super(`${header}Error: ${message}`);
+    super(`${header} Error: ${message}`);
   }
 }
 

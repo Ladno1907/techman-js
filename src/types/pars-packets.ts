@@ -18,19 +18,10 @@ export type TMSTASubCmd = '00' | '01' | TMCustomSubCmd;
 export interface ParsedTMSTA {
   header: TMHeader.Status;
   subCmd: TMSTASubCmd;
-  content: (
-      {
-        entry: boolean;
-        message?: string;
-      }
-    | {
-        tagNumber: TMTagNumber;
-        status: boolean | 'none';
-      }
-    | {
-        rawData: string;
-      }
-  );
+  content: 
+    | { entry: boolean; message?: string }
+    | { tagNumber: TMTagNumber; status: boolean | 'none' }
+    | { rawData: string };
 }
 
 export interface ParsedCPERR {

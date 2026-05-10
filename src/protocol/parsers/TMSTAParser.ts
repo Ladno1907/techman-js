@@ -1,12 +1,29 @@
 // src/protocol/parsers/TMSTAParser.ts
 
-import { ParsedTMSTA, TM_STA_CUSTOM, TMSTASubCmd, TM_TAGS, TMTagNumber, TMHeader } from "../../types/index.js";
+import { ParsedTMSTA, TM_STA_CUSTOM, TMSTASubCmd, TM_TAGS, TMTagNumber, TMHeader, IPacketParser } from "../../types/index.js";
 import { TMParseError, TMSTAError } from "../../errors/techman-errors.js";
 import { PacketParser } from "./packet-parser.js";
 
-export class TMSTAParser extends PacketParser {
-  public static parse(raw: string): ParsedTMSTA {
-    const { parts } = this.parseInitialParts(raw);
+/**
+ * Парсер для пакетов TMSTA (TM Status).
+ * Используется для получения информации о состоянии проекта, тегах и других системных данных.
+ */
+export class TMSTAParser {
+  private parser: IPacketParser;
+
+  constructor(packetParser: IPacketParser = new PacketParser()) {
+    this.parser = packetParser;
+  }
+
+  /**
+   * Разбирает пакеты статуса на основе Sub-Command (00, 01 или Custom).
+   * 
+   * @param raw - Строка пакета $TMSTA...
+   * @throws {TMSTAError} При неизвестном SubCmd или недопустимом номере тега.
+   * @throws {TMParseError} При неверном формате данных внутри подкоманды.
+   */
+  public parse(raw: string): ParsedTMSTA {
+    const { parts } = this.parser.parse(raw);
 
     const subCmdRaw = parts[2];
     if (subCmdRaw !== '00' && subCmdRaw !== '01' && !(TM_STA_CUSTOM as readonly string[]).includes(subCmdRaw)) throw new TMSTAError(`Unsupported TMSTA subCmd: ${subCmdRaw}`);
@@ -40,4 +57,4 @@ export class TMSTAParser extends PacketParser {
       subCmd, content
     };
   }
-} // Good
+}
