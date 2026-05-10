@@ -1,0 +1,52 @@
+{
+  "name": "techman-js",
+  "version": "1.0.0",
+  "description": "TypeScript library for Techman Robot industrial automation via TCP/IP",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:table": "vitest run --coverage --reporter=default",
+    "test:ui": "vitest --ui --coverage",
+    "prepublishOnly": "npm run lint && npm run test:run && npm run build",
+    "clear": "rimraf dist coverage"
+  },
+  "keywords": [
+    "techman",
+    "robotics",
+    "industrial-automation",
+    "tcp",
+    "typescript"
+  ],
+  "author": "Ladno",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/ui": "^4.1.2",
+    "rimraf": "^6.1.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.3",
+    "vite": "^8.0.5",
+    "vitest": "^4.1.2"
+  }
+}
