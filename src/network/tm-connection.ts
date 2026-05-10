@@ -6,19 +6,9 @@ import { IParserRouter, BuiltPacket, ParsedSpecificPacket, IConnection, PendingR
 import { TMConnectError, TMProtocolError } from '../errors/techman-errors.js';
 import { ParserRouter } from '../protocol/parsers/packet-parser.js';
 
-/**
- * Фреймер пакетов. 
- * Решает проблему "слипшихся" или разорванных пакетов TCP.
- * Собирает сырые байты в полноценные строки протокола TM (от $ до \r\n).
- */
 export class PacketFramer {
   private buffer: string = '';
 
-  /**
-   * Добавляет порцию данных в буфер и извлекает из него полные пакеты.
-   * @param chunk - Данные из сокета.
-   * @returns Массив очищенных строк пакетов.
-   */
   push(chunk: string): string[] {
     this.buffer += chunk;
     const packets: string[] = [];
@@ -47,26 +37,17 @@ export class PacketFramer {
   }
 }
 
-/**
- * Отслеживает соответствие между отправленными запросами и входящими ответами.
- */
 export class ResponseTracker {
   private pending = new Map<string, PendingRequest>();
   private queue: string[] = [];
 
-  /**
-   * @param useQueue - Если true, ответы сопоставляются по порядку (FIFO). 
-   *                   Если false, ответы сопоставляются по ID транзакции.
-   */
   constructor(private useQueue: boolean) {}
 
-  /** Добавляет запрос в список ожидания. */
   add(id: string, request: PendingRequest) {
     this.pending.set(id, request);
     if (this.useQueue) this.queue.push(id);
   }
 
-  /** Извлекает запрос при получении ответа. */
   pop(id?: string): PendingRequest | undefined {
     const key = (this.useQueue) ? this.queue.shift() : id;
     if (!key) return undefined;
@@ -76,7 +57,6 @@ export class ResponseTracker {
     return req;
   }
 
-  /** Сбрасывает все ожидающие запросы с ошибкой (например, при обрыве связи). */
   clear(err: Error) {
     this.pending.forEach(req => {
       clearTimeout(req.timer);
@@ -87,25 +67,12 @@ export class ResponseTracker {
   }
 }
 
-/**
- * Сетевое соединение с роботом Techman.
- * Реализует низкоуровневый обмен данными, переподключение и обработку таймаутов.
- * 
- * @emits packet - Вызывается при получении любого корректного пакета.
- * @emits error - Вызывается при ошибках парсинга или сетевых сбоях.
- */
 export class TMConnection extends EventEmitter implements IConnection {
   private socket: Socket = new Socket();
   private framer = new PacketFramer();
   private tracker: ResponseTracker;
   private isExplicitlyClosed = false;
 
-  /**
-   * @param host - IP-адрес робота.
-   * @param port - Порт (5890 для TMSCT, 8080 для TMSVR).
-   * @param parser - Роутер для разбора входящих пакетов.
-   * @param autoReconnect - Включить ли автоматическое переподключение при потере связи.
-   */
   constructor(
     private readonly host: string,
     private readonly port: number,
@@ -138,10 +105,6 @@ export class TMConnection extends EventEmitter implements IConnection {
     this.socket.on('error', (err) => this.emit('error', new TMConnectError(err.message)));
   }
 
-  /**
-   * Устанавливает соединение с роботом.
-   * @throws {TMConnectError} Если не удалось подключиться.
-   */
   async connect(): Promise<void> {
     this.isExplicitlyClosed = false;
     return new Promise((resolve, reject) => {
@@ -159,21 +122,6 @@ export class TMConnection extends EventEmitter implements IConnection {
     });
   }
 
-  /**
-   * Отправляет пакет роботу и опционально ждет ответа.
-   * 
-   * @param packet - Сформированный пакет (из билдеров).
-   * @param wait - Ждать ли ответа от робота (Promise разрешится только после ответа).
-   * @param timeout - Время ожидания ответа в мс.
-   * 
-   * @returns Promise с распарсенным ответом или void, если wait = false.
-   * 
-   * @throws {TMConnectError} При таймауте ожидания.
-   * @throws {TMProtocolError} Если робот вернул системную ошибку (CPERR).
-   * 
-   * @example
-   * const response = await connection.execute(scriptPacket, true, 2000);
-   */
   async execute<T extends ParsedSpecificPacket>(
     packet: BuiltPacket, 
     wait: boolean = true, 
@@ -196,10 +144,6 @@ export class TMConnection extends EventEmitter implements IConnection {
     });
   }
 
-  /**
-   * Внутренняя обработка входящих данных.
-   * Связывает ответ с ожидающим Promise через ResponseTracker.
-   */
   private handleIncoming(parsed: ParsedSpecificPacket) {
     const id = (parsed as any).id;
     const req = this.tracker.pop(id);
@@ -219,9 +163,6 @@ export class TMConnection extends EventEmitter implements IConnection {
     setTimeout(() => this.connect().catch(() => {}), 3000);
   }
 
-  /**
-   * Закрывает соединение и прекращает попытки переподключения.
-   */
   disconnect() {
     this.isExplicitlyClosed = true;
     this.socket.destroy();

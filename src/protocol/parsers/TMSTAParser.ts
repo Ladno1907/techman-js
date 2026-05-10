@@ -4,10 +4,6 @@ import { ParsedTMSTA, TM_STA_CUSTOM, TMSTASubCmd, TM_TAGS, TMTagNumber, TMHeader
 import { TMParseError, TMSTAError } from "../../errors/techman-errors.js";
 import { PacketParser } from "./packet-parser.js";
 
-/**
- * Парсер для пакетов TMSTA (TM Status).
- * Используется для получения информации о состоянии проекта, тегах и других системных данных.
- */
 export class TMSTAParser {
   private parser: IPacketParser;
 
@@ -15,13 +11,6 @@ export class TMSTAParser {
     this.parser = packetParser;
   }
 
-  /**
-   * Разбирает пакеты статуса на основе Sub-Command (00, 01 или Custom).
-   * 
-   * @param raw - Строка пакета $TMSTA...
-   * @throws {TMSTAError} При неизвестном SubCmd или недопустимом номере тега.
-   * @throws {TMParseError} При неверном формате данных внутри подкоманды.
-   */
   public parse(raw: string): ParsedTMSTA {
     const { parts } = this.parser.parse(raw);
 

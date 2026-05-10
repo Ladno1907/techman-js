@@ -10,9 +10,6 @@ import {
 import { TMSCTBuilder } from '../protocol/builders/TMSCTBuilder.js';
 import { TMSTABuilder } from '../protocol/builders/TMSTABuilder.js';
 
-/**
- * Клиент управления роботом (для работы через TMConnection на порту 5890)
- */
 export class TMScriptClient {
   constructor(
     private connection: IConnection,

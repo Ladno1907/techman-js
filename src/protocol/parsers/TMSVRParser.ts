@@ -3,10 +3,6 @@
 import { TMSVRErrorCode, TMSVRDescription, ParsedTMSVR, TMHeader, IPacketParser } from "../../types/index.js";
 import { PacketParser } from "./packet-parser.js";
 
-/**
- * Парсер для пакетов TMSVR (TM Status Value Read).
- * Предназначен для чтения значений переменных, параметров системы и обработки ошибок доступа к данным.
- */
 export class TMSVRParser {
   private parser: IPacketParser;
 
@@ -14,18 +10,6 @@ export class TMSVRParser {
     this.parser = packetParser;
   }
 
-  /**
-   * Разбирает данные переменных. Поддерживает режимы:
-   * - 0: Сообщения об ошибках (ErrorCode).
-   * - 2/12: Чтение значений в формате "ключ=значение".
-   * 
-   * @param raw - Строка пакета $TMSVR...
-   * @throws {Error} Если режим (mode) не поддерживается парсером (не 0, 2 или 12).
-   * 
-   * @example
-   * // Чтение нескольких переменных
-   * const res = parser.parse("$TMSVR,20,ID,2,Var1=10\nVar2=20*CC");
-   */
   public parse(raw: string): ParsedTMSVR {
     const { parts } = this.parser.parse(raw);
 
