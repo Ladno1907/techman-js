@@ -1,8 +1,18 @@
 {
   "name": "techman-js",
-  "version": "2.0.1",
+  "version": "2.0.2",
+  "author": "Ladno",
+  "license": "MIT",
   "description": "TypeScript library for Techman Robot industrial automation via TCP/IP",
+  "keywords": [
+    "techman",
+    "robotics",
+    "TMFlow",
+    "tcp/ip",
+    "typescript"
+  ],
   "type": "module",
+
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,14 +21,20 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.cjs"
     }
   },
   "files": [
     "dist"
   ],
+
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "build": "tsup && tsc --emitDeclarationOnly",
+    "dev": "tsup --watch",
     "lint": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
@@ -27,15 +43,7 @@
     "prepublishOnly": "npm run lint && npm run test:run && npm run build",
     "clear": "rimraf dist coverage"
   },
-  "keywords": [
-    "techman",
-    "robotics",
-    "industrial-automation",
-    "tcp",
-    "typescript"
-  ],
-  "author": "Ladno",
-  "license": "MIT",
+
   "engines": {
     "node": ">=16.0.0"
   },

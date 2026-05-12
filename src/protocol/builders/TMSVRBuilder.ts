@@ -2,13 +2,13 @@
 
 import { TMHeader, BuiltPacket, IPacketBuilder } from "../../types/index.js";
 import { TMSVRError } from "../../errors/techman-errors.js";
-import { SimplePacketBuilder } from "./packet-builder.js";
+import { PacketBuilder } from "./packet-builder.js";
 
 export class TMSVRBuilder {
   private builder: IPacketBuilder;
   private header: TMHeader = TMHeader.Value;
 
-  constructor(packetBuilder: IPacketBuilder = new SimplePacketBuilder()) {
+  constructor(packetBuilder: IPacketBuilder = new PacketBuilder()) {
     this.builder = packetBuilder;
   }
 

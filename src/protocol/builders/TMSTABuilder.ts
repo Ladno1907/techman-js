@@ -2,13 +2,13 @@
 
 import { TMHeader, BuiltPacket, TMTagNumber, TM_TAGS, IPacketBuilder } from "../../types/index.js";
 import { TMSTAError } from "../../errors/techman-errors.js";
-import { PacketBuilder } from "./packet-builder.js";
+import { SimplePacketBuilder } from "./packet-builder.js";
 
 export class TMSTABuilder {
   private builder: IPacketBuilder;
   private header: TMHeader = TMHeader.Status;
 
-  constructor(packetBuilder: IPacketBuilder = new PacketBuilder()) {
+  constructor(packetBuilder: IPacketBuilder = new SimplePacketBuilder()) {
     this.builder = packetBuilder;
   }
 
